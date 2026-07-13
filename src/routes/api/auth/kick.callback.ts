@@ -16,11 +16,15 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         if (error) return htmlError(`Kick OAuth error: ${error}`);
         if (!code || !state) return htmlError("Missing code/state.");
 
+        console.log("Hľadám v DB state:", state);
+
         const { data, error: dbError } = await supabase
           .from("oauth_states")
           .select("verifier")
           .eq("state", state)
           .single();
+
+        console.log("Výsledok z DB:", { data, dbError });
 
         if (dbError || !data) return htmlError("Invalid or expired OAuth state.");
 
@@ -48,12 +52,12 @@ function htmlError(message: string) {
   return new Response(
     `<!doctype html><meta charset="utf-8"><title>Kick OAuth</title>
      <body style="font-family:system-ui;background:#0b0b10;color:#fff;padding:2rem">
-       <h1>Kick přihlášení selhalo</h1><p>${escapeHtml(message)}</p>
-       <p><a style="color:#7cf" href="/auth">Zpět na přihlášení</a></p>
+       <h1>Kick prihlásenie zlyhalo</h1><p>${escapeHtml(message)}</p>
+       <p><a style="color:#7cf" href="/auth">Späť na prihlásenie</a></p>
      </body>`,
     { status: 400, headers: { "content-type": "text/html; charset=utf-8" } },
   );
 }
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-} 
+}
