@@ -24,18 +24,23 @@ export const Route = createFileRoute("/profile")({
 
 function Profile() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const hasKickSession = document.cookie.includes("kick_user_id=");
-    if (!hasKickSession) {
-      router.navigate({ to: "/auth" });
-    } else {
-      setReady(true);
-    }
+    const checkSession = () => {
+      const hasKickSession = document.cookie.includes("kick_user_id=");
+      
+      if (!hasKickSession) {
+        router.navigate({ to: "/auth" });
+      } else {
+        setLoading(false); 
+      }
+    };
+
+    checkSession();
   }, [router]);
 
-  if (!ready) return <main className="mx-auto max-w-6xl px-4 py-12">Načítání…</main>;
+  if (loading) return <main className="mx-auto max-w-6xl px-4 py-12">Načítání profilu…</main>;
   return <ProfileInner />;
 }
 
