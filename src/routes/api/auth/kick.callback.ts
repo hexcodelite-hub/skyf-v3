@@ -39,10 +39,14 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
 
         try {
           const token = await exchangeCodeForToken({ code, verifier, redirectUri });
+          console.log("Token z Kicku:", token); // <-- TOTO SEM
+          
           const user = await fetchKickUser(token.access_token);
+          console.log("User z Kicku:", user);   // <-- TOTO SEM
           
           return Response.redirect(`${origin}/profile?kick_linked`, 302);
         } catch (err) {
+          console.log("CHYBA V KICK CALLBACK:", err); // <-- TOTO SEM
           return htmlError((err as Error).message);
         }
       },
