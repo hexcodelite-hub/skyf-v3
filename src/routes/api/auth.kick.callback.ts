@@ -19,6 +19,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         const verifier = getCookie(event, "kick_pkce_verifier");
         deleteCookie(event, "kick_oauth_state");
         deleteCookie(event, "kick_pkce_verifier");
+        console.log("TEST: Nova verzia kodu bezi!");
         if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
         if (!verifier) return htmlError("Missing PKCE verifier.");
 
