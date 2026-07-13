@@ -7,8 +7,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
   server: {
     handlers: {
       GET: async (event) => {
-        const request = event.request;
-        const url = new URL(request.url);
+        const url = new URL(event.request.url);
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
         const error = url.searchParams.get("error");
@@ -35,25 +34,30 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
           const user = await fetchKickUser(token.access_token);
           const kickUser = user.data[0];
 
-          await supabase
-            .from("users")
-            .upsert({
-              id: kickUser.user_id,
-              username: kickUser.name,
-              email: kickUser.email,
-              avatar_url: kickUser.profile_picture,
-            });
+          await supabase.from("users").upsert({
+            id: kickUser.user_id,
+            username: kickUser.name,
+            email: kickUser.email,
+            avatar_url: kickUser.profile_picture,
+          });
 
-          return new Response(null, {
-              status: 302,
-              headers: {
-            "Location": `${origin}/profile?kick_linked`,
-            "Set-Cookie": `kick_user_id=${kickUser.user_id}; Path=/; HttpOnly; Max-Age=86400`,
-            },
+          // Namiesto vytvárania vlastného Response, vrátime presmerovanie správne cez throw
+          throw redirect({
+            to: "/profile",
+            search: { kick_linked: true },
+          });
+        } catch (err: any) {
+          if (err.status === 302) throw err; // Prepustíme redirect
+          console.log("CHYBA V KICK CALLBACK:", err);
+          return htmlError(err.message || "Unknown error");
+        }
       },
     },
   },
 });
+
+// Importuj redirect z @tanstack/start
+import { redirect } from "@tanstack/start";
 
 function htmlError(message: string) {
   return new Response(
