@@ -1,16 +1,19 @@
-// Patch pre immutable Headers
+
 if (typeof Headers !== 'undefined') {
-  const originalDelete = Headers.prototype.delete;
-  Headers.prototype.delete = function(name) {
-    try {
-      return originalDelete.call(this, name);
-    } catch (e) {
-      if (e instanceof TypeError && e.message === 'immutable') {
-        return;
+  const methods = ['append', 'delete', 'set'];
+  methods.forEach((method) => {
+    const original = (Headers.prototype as any)[method];
+    (Headers.prototype as any)[method] = function (...args: any[]) {
+      try {
+        return original.apply(this, args);
+      } catch (e) {
+        if (e instanceof TypeError && e.message === 'immutable') {
+          return; // Ignorujeme chybu
+        }
+        throw e;
       }
-      throw e;
-    }
-  };
+    };
+  });
 }
 
 import "./lib/error-capture";
