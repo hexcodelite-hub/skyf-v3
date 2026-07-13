@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         console.log("Hľadám v DB state:", state);
 
         const { data, error: dbError } = await supabase
-          .from("public.oauth_states")
+          .from("oauth_states")
           .select("verifier")
           .eq("state", state)
           .single();
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
 
         console.log("Moja URL:", process.env.SUPABASE_URL);
 
-        await supabase.from("public.oauth_states").delete().eq("state", state);
+        await supabase.from("oauth_states").delete().eq("state", state);
 
         const origin = getPublicOrigin(url.origin);
         const redirectUri = origin + siteConfig.kick.redirectPath;
