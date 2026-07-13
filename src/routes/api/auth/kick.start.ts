@@ -16,9 +16,8 @@ export const Route = createFileRoute("/api/auth/kick/start")({
 
         const authUrl = buildAuthorizeUrl({ redirectUri, state, challenge });
 
-        setCookie("kick_oauth_state", state, { httpOnly: true, secure: true });
-        setCookie("kick_pkce_verifier", verifier, { httpOnly: true, secure: true });
-
+        event.cookies.set("kick_oauth_state", state, { httpOnly: true, secure: true });
+        event.cookies.set("kick_pkce_verifier", verifier, { httpOnly: true, secure: true });
         return Response.redirect(authUrl, 302);
       },
     },

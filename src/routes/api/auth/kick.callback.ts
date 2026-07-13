@@ -15,10 +15,11 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         if (error) return htmlError(`Kick OAuth error: ${error}`);
         if (!code || !state) return htmlError("Missing code/state.");
 
-        const cookieState = getCookie(event, "kick_oauth_state");
-        const verifier = getCookie(event, "kick_pkce_verifier");
-        deleteCookie(event, "kick_oauth_state");
-        deleteCookie(event, "kick_pkce_verifier");
+        const cookieState = event.cookies.get("kick_oauth_state");
+        const verifier = event.cookies.get("kick_pkce_verifier");
+
+        event.cookies.remove("kick_oauth_state");
+        event.cookies.remove("kick_pkce_verifier");
         console.log("TEST: Nova verzia kodu bezi!");
         if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
         if (!verifier) return htmlError("Missing PKCE verifier.");
