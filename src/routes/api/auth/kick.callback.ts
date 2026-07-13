@@ -49,8 +49,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
               username: kickUser.name,
               email: kickUser.email,
               avatar_url: kickUser.profile_picture
-            });
-
+           
           return Response.redirect(`${origin}/profile?kick_linked`, 302);
         } catch (err) {
           console.log("CHYBA V KICK CALLBACK:", err);
