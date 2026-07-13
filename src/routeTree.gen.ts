@@ -21,8 +21,8 @@ import { Route as AdminPointsRouteImport } from './routes/admin.points'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
-import { Route as ApiAuthKickStartRouteImport } from './routes/api/auth.kick.start'
-import { Route as ApiAuthKickCallbackRouteImport } from './routes/api/auth.kick.callback'
+import { Route as ApiAuthKickStartRouteImport } from './routes/api/auth/kick.start'
+import { Route as ApiAuthKickCallbackRouteImport } from './routes/api/auth/kick.callback'
 
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
