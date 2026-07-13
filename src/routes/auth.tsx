@@ -27,8 +27,18 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // 1. Skontroluj Supabase
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/profile" });
+      if (data.session) {
+        navigate({ to: "/profile" });
+        return;
+      }
+      
+      // 2. Ak nie je Supabase session, skontroluj naše kick_user_id
+      const kickId = localStorage.getItem("kick_user_id");
+      if (kickId) {
+        navigate({ to: "/profile" });
+      }
     });
   }, [navigate]);
 
