@@ -8,6 +8,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
     handlers: {
       GET: async (event) => {
         const request = event.request;
+        const url = new URL(request.url);
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
         const error = url.searchParams.get("error");
