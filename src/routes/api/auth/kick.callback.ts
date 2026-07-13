@@ -16,22 +16,15 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         if (error) return htmlError(`Kick OAuth error: ${error}`);
         if (!code || !state) return htmlError("Missing code/state.");
 
-        console.log("Hľadám v DB state:", state);
-
         const { data, error: dbError } = await supabase
           .from("oauth_states")
           .select("verifier")
           .eq("state", state)
           .single();
 
-        console.log("Výsledok z DB:", { data, dbError });
-
         if (dbError || !data) return htmlError("Invalid or expired OAuth state.");
 
         const verifier = data.verifier;
-
-        console.log("Moja URL:", process.env.SUPABASE_URL);
-
         await supabase.from("oauth_states").delete().eq("state", state);
 
         const origin = getPublicOrigin(url.origin);
@@ -40,7 +33,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         try {
           const token = await exchangeCodeForToken({ code, verifier, redirectUri });
           const user = await fetchKickUser(token.access_token);
-          const kickUser = user.data[0]; 
+          const kickUser = user.data[0];
 
           await supabase
             .from("users")
@@ -48,7 +41,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
               id: kickUser.user_id,
               username: kickUser.name,
               email: kickUser.email,
-              avatar_url: kickUser.profile_picture
+              avatar_url: kickUser.profile_picture,
             });
 
           return Response.redirect(`${origin}/profile?kick_linked`, 302);
@@ -56,6 +49,9 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
           console.log("CHYBA V KICK CALLBACK:", err);
           return htmlError((err as Error).message);
         }
+      },
+    },
+  },
 });
 
 function htmlError(message: string) {
@@ -68,6 +64,7 @@ function htmlError(message: string) {
     { status: 400, headers: { "content-type": "text/html; charset=utf-8" } },
   );
 }
+
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
