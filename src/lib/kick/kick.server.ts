@@ -66,9 +66,11 @@ export async function exchangeCodeForToken(opts: {
 
   const res = await fetch(siteConfig.kick.endpoints.token, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body,
-  });
+    headers: new Headers({
+    "content-type": "application/x-www-form-urlencoded",
+   }),
+   body,
+ });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Kick token exchange failed (${res.status}): ${text}`);
