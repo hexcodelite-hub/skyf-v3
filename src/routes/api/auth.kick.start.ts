@@ -7,19 +7,17 @@ import { buildAuthorizeUrl, generatePkcePair, getPublicOrigin } from "@/lib/kick
 export const Route = createFileRoute("/api/auth/kick/start")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const origin = getPublicOrigin(new URL(request.url).origin);
-        const redirectUri = origin + siteConfig.kick.redirectPath;
-
+      GET: async (event) => {
+        const request = event.request;
         const { verifier, challenge } = generatePkcePair();
         const state = randomBytes(16).toString("hex");
 
         setCookie("kick_pkce_verifier", verifier, {
-          httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 600,
+         httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 600, domain: "skyf-v3.netlify.app"
         });
         setCookie("kick_oauth_state", state, {
-          httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 600,
-        });
+         httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 600, domain: "skyf-v3.netlify.app"
+       });
 
         try {
           const url = buildAuthorizeUrl({ redirectUri, state, challenge });
