@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { setCookie } from "@tanstack/react-start/server"; // Importujeme toto
+import { setCookie } from "@tanstack/react-start/server"; 
 import { siteConfig } from "@/config/site";
 import { buildAuthorizeUrl, generatePkcePair, getPublicOrigin } from "@/lib/kick/kick.server";
 
@@ -13,13 +13,13 @@ export const Route = createFileRoute("/api/auth/kick/start")({
 
         const { verifier, challenge } = generatePkcePair();
         const state = crypto.randomUUID();
-
         const authUrl = buildAuthorizeUrl({ redirectUri, state, challenge });
 
-        setCookie(event, "kick_oauth_state", state, { httpOnly: true, secure: true });
-        setCookie(event, "kick_pkce_verifier", verifier, { httpOnly: true, secure: true });
-
-        return Response.redirect(authUrl, 302);
+        const response = Response.redirect(authUrl, 302);
+        response.headers.append("Set-Cookie", `kick_oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax`);
+        response.headers.append("Set-Cookie", `kick_pkce_verifier=${verifier}; Path=/; HttpOnly; Secure; SameSite=Lax`);
+        
+        return response;
       },
     },
   },

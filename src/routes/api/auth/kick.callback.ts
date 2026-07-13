@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { deleteCookie, getCookie } from "@tanstack/react-start/server";
 import { siteConfig } from "@/config/site";
 import { exchangeCodeForToken, fetchKickUser, getPublicOrigin } from "@/lib/kick/kick.server";
 
@@ -15,29 +14,37 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         if (error) return htmlError(`Kick OAuth error: ${error}`);
         if (!code || !state) return htmlError("Missing code/state.");
 
-        const cookieState = getCookie(event, "kick_oauth_state");
-        const verifier = getCookie(event, "kick_pkce_verifier");
+    const cookieHeader = event.request.headers.get("Cookie") || "";
+    
+    const getCookieValue = (name: string) => {
+      const match = cookieHeader.match(new RegExp('(^| )' + name + '=([^;]+)'));
+      return match ? match[2] : null;
+    };
 
-        deleteCookie(event, "kick_oauth_state");
-        deleteCookie(event, "kick_pkce_verifier");
-        console.log("TEST: Nova verzia kodu bezi!");
-        if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
-        if (!verifier) return htmlError("Missing PKCE verifier.");
+    const cookieState = getCookieValue("kick_oauth_state");
+    const verifier = getCookieValue("kick_pkce_verifier");
 
-        const origin = getPublicOrigin(url.origin);
-        const redirectUri = origin + siteConfig.kick.redirectPath;
+    console.log("TEST: Nova verzia kodu bezi!");
 
-        try {
-          const token = await exchangeCodeForToken({ code, verifier, redirectUri });
-          const user = await fetchKickUser(token.access_token);
-          // TODO: link the Kick user to the current Supabase user (write to
-          // `profiles.kick_id` / `profiles.kick_name`) once the desired
-          // account-linking policy is decided. Left intentionally minimal so
-          // credentials can be dropped in and the flow verified end-to-end.
-          console.log("[kick] linked user", user.data?.[0]?.name);
-          return Response.redirect(`${origin}/profile?kick=linked`, 302);
-        } catch (err) {
-          return htmlError((err as Error).message);
+    if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
+    if (!verifier) return htmlError("Missing PKCE verifier.");
+
+    const origin = getPublicOrigin(url.origin);
+    const redirectUri = origin + siteConfig.kick.redirectPath;
+
+    try {
+      const token = await exchangeCodeForToken({ code, verifier, redirectUri });
+      const user = await fetchKickUser(token.access_token);
+      
+      // 2. Vytvorenie odpovede a zmazanie cookies cez hlavičky (Max-Age=0)
+      const response = Response.redirect(`${origin}/profile?kick_linked`, 302);
+      response.headers.append("Set-Cookie", "kick_oauth_state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax");
+      response.headers.append("Set-Cookie", "kick_pkce_verifier=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax");
+      
+      return response;
+    } catch (err) {
+      return htmlError((err as Error).message);
+    
         }
       },
     },
