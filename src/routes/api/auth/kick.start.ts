@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { setCookie } from "@tanstack/react-start/server"; 
 import { siteConfig } from "@/config/site";
 import { buildAuthorizeUrl, generatePkcePair, getPublicOrigin } from "@/lib/kick/kick.server";
+import { supabase } from "@/lib/supabase"; 
 
 export const Route = createFileRoute("/api/auth/kick/start")({
   server: {
@@ -13,14 +13,15 @@ export const Route = createFileRoute("/api/auth/kick/start")({
 
         const { verifier, challenge } = generatePkcePair();
         const state = crypto.randomUUID();
-        
+
+        await supabase.from("oauth_states").insert({ 
+          state: state, 
+          verifier: verifier 
+        });
+
         const authUrl = buildAuthorizeUrl({ redirectUri, state, challenge });
 
-        const response = Response.redirect(authUrl, 302);
-        
-        response.headers.append("Set-Cookie", `kick_pkce_verifier=${verifier}; Path=/; HttpOnly; Secure; SameSite=None`);
-        
-        return response;
+        return Response.redirect(authUrl, 302);
       },
     },
   },

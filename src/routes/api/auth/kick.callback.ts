@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { siteConfig } from "@/config/site";
 import { exchangeCodeForToken, fetchKickUser, getPublicOrigin } from "@/lib/kick/kick.server";
+import { supabase } from "@/lib/supabase"; 
 
 export const Route = createFileRoute("/api/auth/kick/callback")({
   server: {
@@ -11,41 +12,32 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
         const error = url.searchParams.get("error");
+
         if (error) return htmlError(`Kick OAuth error: ${error}`);
         if (!code || !state) return htmlError("Missing code/state.");
 
-    const cookieHeader = event.request.headers.get("Cookie") || "";
-    console.log("DEBUG COOKIES:", cookieHeader); 
-    
-    const getCookieValue = (name: string) => {
-      const match = cookieHeader.match(new RegExp('(^| )' + name + '=([^;]+)'));
-      return match ? match[2] : null;
-    };
+        const { data, error: dbError } = await supabase
+          .from("oauth_states")
+          .select("verifier")
+          .eq("state", state)
+          .single();
 
-    const cookieState = getCookieValue("kick_oauth_state");
-    const verifier = getCookieValue("kick_pkce_verifier");
+        if (dbError || !data) return htmlError("Invalid or expired OAuth state.");
 
-    console.log("TEST: Nova verzia kodu bezi!");
+        const verifier = data.verifier;
 
-    if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
-    if (!verifier) return htmlError("Missing PKCE verifier.");
+        await supabase.from("oauth_states").delete().eq("state", state);
 
-    const origin = getPublicOrigin(url.origin);
-    const redirectUri = origin + siteConfig.kick.redirectPath;
+        const origin = getPublicOrigin(url.origin);
+        const redirectUri = origin + siteConfig.kick.redirectPath;
 
-    try {
-      const token = await exchangeCodeForToken({ code, verifier, redirectUri });
-      const user = await fetchKickUser(token.access_token);
-      
-      // 2. Vytvorenie odpovede a zmazanie cookies cez hlavičky (Max-Age=0)
-      const response = Response.redirect(`${origin}/profile?kick_linked`, 302);
-      response.headers.append("Set-Cookie", "kick_oauth_state=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax");
-      response.headers.append("Set-Cookie", "kick_pkce_verifier=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Lax");
-      
-      return response;
-    } catch (err) {
-      return htmlError((err as Error).message);
-    
+        try {
+          const token = await exchangeCodeForToken({ code, verifier, redirectUri });
+          const user = await fetchKickUser(token.access_token);
+          
+          return Response.redirect(`${origin}/profile?kick_linked`, 302);
+        } catch (err) {
+          return htmlError((err as Error).message);
         }
       },
     },
@@ -64,4 +56,4 @@ function htmlError(message: string) {
 }
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
-}
+} 
