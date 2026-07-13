@@ -1,51 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { deleteCookie, getCookie } from "@tanstack/react-start/server";
+import { setCookie } from "@tanstack/react-start/server";
 import { siteConfig } from "@/config/site";
-import { exchangeCodeForToken, fetchKickUser, getPublicOrigin } from "@/lib/kick/kick.server";
+import { getKickAuthUrl, getPublicOrigin } from "@/lib/kick/kick.server";
 
-export const Route = createFileRoute("/api/auth/kick/callback")({
+export const Route = createFileRoute("/api/auth/kick/start")({
   server: {
     handlers: {
       GET: async (event) => {
-        const request = event.request;
-        const url = new URL(request.url);
-        const code = url.searchParams.get("code");
-        const state = url.searchParams.get("state");
-        const error = url.searchParams.get("error");
-
-        if (error) return htmlError(`Kick OAuth error: ${error}`);
-        if (!code || !state) return htmlError("Missing code/state.");
-
-        // Správne volanie bez 'event':
-        const cookieState = getCookie("kick_oauth_state");
-        const verifier = getCookie("kick_pkce_verifier");
-
-        deleteCookie("kick_oauth_state");
-        deleteCookie("kick_pkce_verifier");
-
-        if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
-        if (!verifier) return htmlError("Missing PKCE verifier.");
-
+        const url = new URL(event.request.url);
         const origin = getPublicOrigin(url.origin);
         const redirectUri = origin + siteConfig.kick.redirectPath;
 
-        try {
-          const token = await exchangeCodeForToken({ code, verifier, redirectUri });
-          const user = await fetchKickUser(token.access_token);
+        // 1. Získaj autorizačnú URL a hodnoty pre bezpečnosť
+        const { url: authUrl, state, verifier } = await getKickAuthUrl(redirectUri);
 
-          console.log("[kick] linked user", user.data?.[0]?.name);
-          return Response.redirect(`${origin}/profile?kick=linked`, 302);
-        } catch (err) {
-          return htmlError((err as Error).message);
-        }
+        // 2. Ulož state a verifier do cookies (pre kontrolu v callbacku)
+        setCookie("kick_oauth_state", state, { httpOnly: true, secure: true });
+        setCookie("kick_pkce_verifier", verifier, { httpOnly: true, secure: true });
+
+        // 3. Presmeruj používateľa na Kick
+        return Response.redirect(authUrl, 302);
       },
     },
   },
 });
-
-function htmlError(message: string) {
-  return new Response(
-    `<html><body><h1>Kick Auth Error</h1><p>${message}</p></body></html>`,
-    { headers: { "Content-Type": "text/html" }, status: 400 }
-  );
-}
