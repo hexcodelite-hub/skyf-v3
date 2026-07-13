@@ -6,18 +6,18 @@ import { exchangeCodeForToken, fetchKickUser, getPublicOrigin } from "@/lib/kick
 export const Route = createFileRoute("/api/auth/kick/callback")({
   server: {
     handlers: {
-      GET: async ({ request }) => {
-        const url = new URL(request.url);
+      GET: async (event) => {
+        const request = event.request;
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
         const error = url.searchParams.get("error");
         if (error) return htmlError(`Kick OAuth error: ${error}`);
         if (!code || !state) return htmlError("Missing code/state.");
 
-        const cookieState = getCookie("kick_oauth_state");
-        const verifier = getCookie("kick_pkce_verifier");
-        deleteCookie("kick_oauth_state", { path: "/" });
-        deleteCookie("kick_pkce_verifier", { path: "/" });
+        const cookieState = getCookie(event, "kick_oauth_state");
+        const verifier = getCookie(event, "kick_pkce_verifier");
+        deleteCookie(event, "kick_oauth_state", { path: "/" });
+        deleteCookie(event, "kick_pkce_verifier", { path: "/" });
         if (!cookieState || cookieState !== state) return htmlError("Invalid OAuth state.");
         if (!verifier) return htmlError("Missing PKCE verifier.");
 
