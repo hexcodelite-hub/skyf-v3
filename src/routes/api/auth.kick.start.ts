@@ -12,6 +12,9 @@ export const Route = createFileRoute("/api/auth/kick/start")({
         const { verifier, challenge } = generatePkcePair();
         const state = randomBytes(16).toString("hex");
 
+        const origin = "https://skyf-v3.netlify.app";
+        const redirectUri = "https://skyf-v3.netlify.app/api/auth/kick/callback";
+
         setCookie("kick_pkce_verifier", verifier, {
          httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 600, domain: "skyf-v3.netlify.app"
         });
