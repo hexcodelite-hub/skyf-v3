@@ -5,10 +5,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const requireKickOrSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
     const request = getRequest();
-    const cookieHeader = request.headers.get('cookie') || "";
+    const cookieHeader = request.heade
+    console.log("Cookies v requeste:", request.headers.get('cookie'));
     const kickUserId = cookieHeader.match(/kick_user_id=([^;]+)/)?.[1];
 
-    // Ak existuje Kick cookie, preskočíme Supabase token check
     if (kickUserId) {
       return next({
         context: {
@@ -18,7 +18,6 @@ export const requireKickOrSupabaseAuth = createMiddleware({ type: 'function' }).
       });
     }
 
-    // Ak nie je cookie, vrátime pôvodnú chybu (alebo vyvoláme tvoj pôvodný middleware)
     throw new Error('Unauthorized: No session found');
   },
 );
