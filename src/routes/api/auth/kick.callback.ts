@@ -15,6 +15,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         if (!code || !state) return htmlError("Missing code/state.");
 
     const cookieHeader = event.request.headers.get("Cookie") || "";
+    console.log("DEBUG COOKIES:", cookieHeader); 
     
     const getCookieValue = (name: string) => {
       const match = cookieHeader.match(new RegExp('(^| )' + name + '=([^;]+)'));
