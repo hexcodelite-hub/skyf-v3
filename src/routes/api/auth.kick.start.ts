@@ -5,7 +5,6 @@ import { siteConfig } from "@/config/site";
 import { buildAuthorizeUrl, generatePkcePair, getPublicOrigin } from "@/lib/kick/kick.server";
 
 export const Route = createFileRoute("/api/auth/kick/start")({
-  ssr: false,
   server: {
     handlers: {
       GET: async ({ request }) => {

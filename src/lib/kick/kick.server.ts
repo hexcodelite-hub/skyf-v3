@@ -1,8 +1,16 @@
 /**
  * Server-only Kick Developer (Beta) helpers.
+ * Reads secrets from process.env — never import from client code.
+ *
+ * Configure the following in your project secrets / .env:
+ *   KICK_CLIENT_ID       - OAuth client id (also exposed as VITE_KICK_CLIENT_ID)
+ *   KICK_CLIENT_SECRET   - OAuth client secret (SERVER ONLY)
+ *   KICK_API_TOKEN       - Optional app-level bearer token for public API calls
+ *   KICK_POINTS_TOKEN    - Optional bearer for your custom points endpoint
+ *   PUBLIC_APP_URL       - Public origin of this deployment (https://…)
  */
+
 import { createHash, randomBytes } from "node:crypto";
-import https from "node:https";
 import { siteConfig } from "@/config/site";
 
 export function getPublicOrigin(fallback?: string) {
@@ -54,35 +62,21 @@ export async function exchangeCodeForToken(opts: {
     code_verifier: opts.verifier,
     client_id: clientId,
     client_secret: clientSecret,
-  }).toString();
-
-  return new Promise((resolve, reject) => {
-    const url = new URL(siteConfig.kick.endpoints.token);
-    const req = https.request(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Content-Length": Buffer.byteLength(body),
-      },
-    }, (res) => {
-      let data = "";
-      res.on("data", (chunk) => data += chunk);
-      res.on("end", () => {
-        if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-          try { resolve(JSON.parse(data)); } catch (e) { reject(new Error("Failed to parse response")); }
-        } else {
-          reject(new Error(`Kick token exchange failed (${res.statusCode}): ${data}`));
-        }
-      });
-    });
-    req.on("error", reject);
-    req.write(body);
-    req.end();
   });
+
+  const res = await fetch(siteConfig.kick.endpoints.token, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Kick token exchange failed (${res.status}): ${text}`);
+  }
+  return (await res.json()) as KickTokenResponse;
 }
 
 export async function fetchKickUser(accessToken: string) {
-  // Tu môžeme nechať fetch, pretože táto funkcia zatiaľ chybu nespôsobovala
   const res = await fetch(`${siteConfig.kick.endpoints.api}/users`, {
     headers: { authorization: `Bearer ${accessToken}` },
   });
