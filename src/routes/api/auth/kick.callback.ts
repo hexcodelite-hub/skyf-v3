@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
         try {
           const token = await exchangeCodeForToken({ code, verifier, redirectUri });
           const user = await fetchKickUser(token.access_token);
-          const kickUser = user.data; 
+          const kickUser = user.data[0]; 
 
           await supabase
             .from("users")
@@ -49,7 +49,8 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
               username: kickUser.name,
               email: kickUser.email,
               avatar_url: kickUser.profile_picture
-           
+            });
+
           return Response.redirect(`${origin}/profile?kick_linked`, 302);
         } catch (err) {
           console.log("CHYBA V KICK CALLBACK:", err);
