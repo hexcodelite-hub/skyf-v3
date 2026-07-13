@@ -30,7 +30,9 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
 
         const verifier = data.verifier;
 
-       await supabase.from("public.oauth_states").delete().eq("state", state);
+        console.log("Moja URL:", process.env.SUPABASE_URL);
+
+        await supabase.from("public.oauth_states").delete().eq("state", state);
 
         const origin = getPublicOrigin(url.origin);
         const redirectUri = origin + siteConfig.kick.redirectPath;
