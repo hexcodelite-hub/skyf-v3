@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
             status: 302,
             headers: {
               "Location": `${origin}/profile?kick_linked=true`,
-              "Set-Cookie": `kick_user_id=${kickUser.user_id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`,
+              "Set-Cookie": `kick_user_id=${kickUser.user_id}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=86400`,
             },
           });
         } catch (err: any) {
