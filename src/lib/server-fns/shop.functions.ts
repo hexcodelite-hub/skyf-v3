@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKickOrSupabaseAuth } from "@/integrations/supabase/kick-auth";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -29,7 +29,7 @@ export const listLeaderboard = createServerFn({ method: "GET" }).handler(async (
 });
 
 export const purchaseSkin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireKickOrSupabaseAuth])
   .inputValidator((d: { skinId: string }) => d)
   .handler(async ({ data, context }) => {
     const { data: orderId, error } = await context.supabase.rpc("purchase_skin", { _skin_id: data.skinId });
@@ -38,7 +38,7 @@ export const purchaseSkin = createServerFn({ method: "POST" })
   });
 
 export const getMyOrders = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireKickOrSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("orders")
@@ -50,7 +50,7 @@ export const getMyOrders = createServerFn({ method: "GET" })
   });
 
 export const getMyProfile = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireKickOrSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("profiles")
@@ -62,7 +62,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
   });
 
 export const updateTradeUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireKickOrSupabaseAuth])
   .inputValidator((d: { tradeUrl: string }) => {
     const v = String(d.tradeUrl || "").trim();
     if (v.length > 500) throw new Error("Trade URL příliš dlouhé");
