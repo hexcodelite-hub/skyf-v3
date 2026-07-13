@@ -41,13 +41,15 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
             avatar_url: kickUser.profile_picture,
           });
 
-          // Namiesto vytvárania vlastného Response, vrátime presmerovanie správne cez throw
-          throw redirect({
-            to: "/profile",
-            search: { kick_linked: true },
+          // Návrat presmerovania cez štandardný Response objekt
+          return new Response(null, {
+            status: 302,
+            headers: {
+              "Location": `${origin}/profile?kick_linked=true`,
+              "Set-Cookie": `kick_user_id=${kickUser.user_id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`,
+            },
           });
         } catch (err: any) {
-          if (err.status === 302) throw err; // Prepustíme redirect
           console.log("CHYBA V KICK CALLBACK:", err);
           return htmlError(err.message || "Unknown error");
         }
@@ -55,9 +57,6 @@ export const Route = createFileRoute("/api/auth/kick/callback")({
     },
   },
 });
-
-// Importuj redirect z @tanstack/start
-import { redirect } from "@tanstack/start";
 
 function htmlError(message: string) {
   return new Response(
