@@ -1,3 +1,18 @@
+// Patch pre immutable Headers
+if (typeof Headers !== 'undefined') {
+  const originalDelete = Headers.prototype.delete;
+  Headers.prototype.delete = function(name) {
+    try {
+      return originalDelete.call(this, name);
+    } catch (e) {
+      if (e instanceof TypeError && e.message === 'immutable') {
+        return;
+      }
+      throw e;
+    }
+  };
+}
+
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
