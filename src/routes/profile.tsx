@@ -44,13 +44,14 @@ function Profile() {
 
 function ProfileInner() {
   const router = useRouter();
-  const { data: profile, refetch } = useQuery({ 
-  queryKey: ["me"], 
-queryFn: () => {
-  const kickId = localStorage.getItem("kick_user_id");
-  return getMyProfile({ data: { kickId } });
-},
-enabled: !!localStorage.getItem("kick_user_id"),
+  const { data: profile, refetch } = useQuery({
+    queryKey: ["me"],
+    queryFn: () => {
+      const kickId = typeof window !== "undefined" ? localStorage.getItem("kick_user_id") : null;
+      return getMyProfile({ data: { kickId } });
+    },
+    enabled: typeof window !== "undefined" && !!localStorage.getItem("kick_user_id"),
+  });
 
   const { data: orders = [], refetch: refetchOrders } = useQuery({ queryKey: ["me-orders"], queryFn: () => getMyOrders() });
   const { data: livePoints } = useQuery({
