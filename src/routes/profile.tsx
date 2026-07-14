@@ -27,17 +27,15 @@ function Profile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkSession = () => {
-      const hasKickSession = document.cookie.includes("kick_user_id=");
+    supabase.auth.getSession().then(({ data }) => {
+      const kickId = localStorage.getItem("kick_user_id");
       
-      if (!hasKickSession) {
+      if (!data.session && !kickId) {
         router.navigate({ to: "/auth" });
       } else {
-        setLoading(false); 
+        setLoading(false);
       }
-    };
-
-    checkSession();
+    });
   }, [router]);
 
   if (loading) return <main className="mx-auto max-w-6xl px-4 py-12">Načítání profilu…</main>;
