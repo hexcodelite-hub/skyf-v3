@@ -49,16 +49,17 @@ export const getMyOrders = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-export const getMyProfile = createServerFn({ method: "GET" })
-  .middleware([requireKickOrSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+export const getMyProfile = createServerFn({ method: "POST" })
+  .validator((d: { kickId: string | null }) => d)
+  .handler(async ({ data }) => {
+    const { data: profile, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", context.userId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    return data;
+      .eq("kick_user_id", data.kickId) 
+      .single();
+
+    if (error) throw error;
+    return profile;
   });
 
 export const updateTradeUrl = createServerFn({ method: "POST" })

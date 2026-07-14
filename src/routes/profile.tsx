@@ -44,7 +44,10 @@ function Profile() {
 
 function ProfileInner() {
   const router = useRouter();
-  const { data: profile, refetch } = useQuery({ queryKey: ["me"], queryFn: () => getMyProfile() });
+  const { data: profile, refetch } = useQuery({ 
+  queryKey: ["me"], 
+  queryFn: () => getMyProfile({ data: { kickId } }) 
+});
   const { data: orders = [], refetch: refetchOrders } = useQuery({ queryKey: ["me-orders"], queryFn: () => getMyOrders() });
   const { data: livePoints } = useQuery({
     queryKey: ["kick-points", profile?.kick_name],
