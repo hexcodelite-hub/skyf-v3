@@ -28,19 +28,25 @@ export const listLeaderboard = createServerFn({ method: "GET" }).handler(async (
   return data ?? [];
 });
 
+export const purchaseSkin = createServerFn({ method: "POST" })
+  .middleware([requireKickOrSupabaseAuth])
+  .validator((d: { skinId: string }) => d)
+  .handler(async ({ data, context }) => {
+    const { data: orderId, error } = await context.supabase.rpc("purchase_skin", { _skin_id: data.skinId });
+    if (error) throw new Error(error.message);
+    return { orderId };
+  });
+
 export const getMyProfile = createServerFn({ method: "POST" })
   .validator((d: { kickId: string | null }) => d)
   .handler(async ({ data }) => {
     if (!data.kickId) return null;
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("*")
       .eq("kick_user_id", data.kickId)
       .maybeSingle();
-
     if (error) throw new Error(error.message);
     return profile;
   });
@@ -59,7 +65,7 @@ export const getMyOrders = createServerFn({ method: "GET" })
 
 export const updateTradeUrl = createServerFn({ method: "POST" })
   .middleware([requireKickOrSupabaseAuth])
-  .inputValidator((d: { tradeUrl: string }) => {
+  .validator((d: { tradeUrl: string }) => {
     const v = String(d.tradeUrl || "").trim();
     if (v.length > 500) throw new Error("Trade URL příliš dlouhé");
     if (v && !/^https?:\/\/steamcommunity\.com\/tradeoffer\/new\//i.test(v)) throw new Error("Neplatný Steam trade URL");
