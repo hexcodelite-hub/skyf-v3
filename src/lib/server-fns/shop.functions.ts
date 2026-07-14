@@ -18,7 +18,6 @@ export const listActiveSkins = createServerFn({ method: "GET" }).handler(async (
 });
 
 export const listLeaderboard = createServerFn({ method: "GET" }).handler(async () => {
-  // Use admin client to bypass RLS but project ONLY safe columns (never trade_url).
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("profiles")
@@ -29,13 +28,21 @@ export const listLeaderboard = createServerFn({ method: "GET" }).handler(async (
   return data ?? [];
 });
 
-export const purchaseSkin = createServerFn({ method: "POST" })
-  .middleware([requireKickOrSupabaseAuth])
-  .inputValidator((d: { skinId: string }) => d)
-  .handler(async ({ data, context }) => {
-    const { data: orderId, error } = await context.supabase.rpc("purchase_skin", { _skin_id: data.skinId });
+export const getMyProfile = createServerFn({ method: "POST" })
+  .validator((d: { kickId: string | null }) => d)
+  .handler(async ({ data }) => {
+    if (!data.kickId) return null;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: profile, error } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("kick_user_id", data.kickId)
+      .maybeSingle();
+
     if (error) throw new Error(error.message);
-    return { orderId };
+    return profile;
   });
 
 export const getMyOrders = createServerFn({ method: "GET" })
@@ -48,21 +55,6 @@ export const getMyOrders = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
-  });
-
-export const getMyProfile = createServerFn({ method: "POST" })
-  .validator((d: { kickId: string | null }) => d)
-  .handler(async ({ data }) => {
-    if (!data.kickId) throw new Error("Chýba Kick ID");
-
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("kick_user_id", data.kickId) 
-      .single();
-
-    if (error) throw new Error(error.message);
-    return profile;
   });
 
 export const updateTradeUrl = createServerFn({ method: "POST" })
