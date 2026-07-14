@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireKickOrSupabaseAuth } from "@/integrations/supabase/kick-auth";
 import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 import type { Database } from "@/integrations/supabase/types";
 
 function serverPublicClient() {
@@ -52,13 +53,15 @@ export const getMyOrders = createServerFn({ method: "GET" })
 export const getMyProfile = createServerFn({ method: "POST" })
   .validator((d: { kickId: string | null }) => d)
   .handler(async ({ data }) => {
+    if (!data.kickId) throw new Error("Chýba Kick ID");
+
     const { data: profile, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("kick_user_id", data.kickId) 
       .single();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return profile;
   });
 
